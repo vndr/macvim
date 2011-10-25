@@ -1,0 +1,146 @@
+<?php
+// $id$
+
+/**
+ * @file Functions for the Amnesty Views plugins module.
+ */
+
+/**
+ * Implementation of hook_views_api().
+ */
+function amnesty_newsviews_views_api() {
+  return array(
+    'api' => 2,
+  );
+}
+
+/**
+ * Implementation of hook_theme_registry_alter().
+ * Lets the theme functions know that we have some hooks it needs to pay attention to 
+ */
+function amnesty_newsviews_theme_registry_alter(&$theme_registry) {
+	_add_theme_hook_views_field($theme_registry,'views_view_field__top_news_by_region__field_ai_index_number_value');
+	_add_theme_hook_views_field($theme_registry,'views_view_field__top_news_by_region__tid');
+}
+
+// Helper function to add theme hooks
+function _add_theme_hook_views_field(&$theme_registry,$theme_hook){
+	// Get the path to this module
+  	$path = drupal_get_path('module', 'amnesty_newsviews') . "/theme";
+	// Set all these (maybe we don't need them all ... )
+	$theme_registry[$theme_hook]['template'] = str_replace('_','-',$theme_hook);
+    $theme_registry[$theme_hook]['theme paths'] = array($path);
+	$theme_registry[$theme_hook]['theme path'] = $path;
+	$theme_registry[$theme_hook]['path'] = $path;
+	$theme_registry[$theme_hook]['include files'] = array('/sites/default/modules/contrib-patch/views/theme/theme.inc');
+	$theme_registry[$theme_hook]['type'] = 'theme_engine';
+	$theme_registry[$theme_hook]['arguments'] = array('view' => NULL, 'field' => NULL, 'row' => NULL);
+	$theme_registry[$theme_hook]['preprocess functions'] = array(	0 => 'template_preprocess',
+	                    											1 => 'template_preprocess_views_view_field');
+}
+
+
+function amnesty_newsviews_form_alter(&$form, &$form_state, $form_id) {
+	if ($form_id == 'views_exposed_form' && $form['#id'] == 'views-exposed-form-top-news-by-region-panel-pane-2') {
+		$region = $form['term_node_tid_depth']['#options']['All'] = t('Region');
+		$topic = $form['tid']['#options']['All'] = t('Topic');
+		array_unshift($form['term_node_tid_depth']['#options']['All'],$region);
+		array_unshift($form['tid']['#options']['All'],$topic);
+	}
+}
+
+
+function amnesty_newsviews_preprocess_views_exposed_form(&$vars) {
+  $c_path = '/' .drupal_get_path('module','amnesty_news') . '/images/calendar.png';
+  if ($vars['form']['#id'] == 'views-exposed-form-top-news-by-region-panel-pane-2') {
+    $vars['form']['date_filter']['value']['date']['#value'] = 'From...';
+    if($vars['widgets']['filter-date_filter']) {
+      $vars['widgets']['filter-date_filter']->widget = '
+        <span id="thmr_153" class="thmr_call">
+          <span id="thmr_146" class="thmr_call">
+            <div class="date-views-filter-wrapper">
+              <div class="container-inline-date date-clear"></div>
+              <div class="date-clear form-item">
+                <div class="description">
+                  <span id="thmr_152" class="thmr_call">
+                    <span id="thmr_150" class="thmr_call">
+                      <div class="container-inline-date form-item date-clear-block">
+                        <div class="form-item" id="edit-date-filter-value-wrapper">
+                          <span id="thmr_147" class="thmr_call">
+                            <p>'. t("Period") .'</p>
+                            <div class="form-item" id="edit-date-filter-value-datepicker-popup-0-wrapper">
+                              <input type="text" maxlength="30" name="date_filter[value][date]" id="edit-date-filter-value-datepicker-popup-0" size="20" value="" class="form-text" />
+                              <div class="description"></div>
+                            </div>
+                          </span>
+                          <span class="news-filter-calendar-icon-from"><img src=' . $c_path .' /></span>
+                        </div>
+                      </div>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>  
+          </span>
+        </span>';
+    }
+
+    if($vars['widgets']['filter-date_filter_1']) {
+      $vars['widgets']['filter-date_filter_1']->widget = '
+        <span id="thmr_161" class="thmr_call">
+          <span id="thmr_154" class="thmr_call">
+            <div class="date-views-filter-wrapper">
+              <div class="container-inline-date date-clear"></div>
+              <div class="date-clear form-item">
+                <div class="description">
+                  <span id="thmr_160" class="thmr_call">
+                    <span id="thmr_158" class="thmr_call">
+                      <div class="container-inline-date form-item date-clear-block">
+                        <div class="form-item" id="edit-date-filter-1-value-wrapper">
+                          <span id="thmr_155" class="thmr_call">
+                            <div class="form-item" id="edit-date-filter-1-value-datepicker-popup-0-wrapper">
+                              <input type="text" maxlength="30" name="date_filter_1[value][date]" id="edit-date-filter-1-value-datepicker-popup-0" size="20" value="" class="form-text" />
+                              <div class="description"></div>
+                            </div>
+                          </span>
+                          <span class="news-filter-calendar-icon-to"><img src=' . $c_path .' /></span>
+                        </div>
+                      </div>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </span>
+        </span>';
+    }
+    if($vars['button']) {
+      $vars['button'] = '<span id="thmr_164" class="thmr_call">
+        <span id="thmr_162" class="thmr_call">
+  <span id="thmr_163" class="thmr_call">
+  <input type="submit" id="edit-submit-top-news-by-region" value="' . t("OK") . '"  class="form-submit" />
+</span>
+
+</span>
+
+</span>';
+	}
+  }
+}
+/**
+ * Implementation of hook_theme().
+ */
+function amnesty_newsviews_theme() {
+  return array(
+    'recentnews_field_term_node_tid' => array(),
+  );
+}
+
+
+// Theme functions ...
+function theme_recentnews_field_term_node_tid($item,$match){
+	if($match){
+		$item =	"<span class='dt-highlight-tag'>$item</span>";
+	}
+	return $item;
+}
